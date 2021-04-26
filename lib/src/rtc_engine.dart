@@ -172,6 +172,27 @@ class RtcEngine with RtcEngineInterface {
     });
   }
 
+  /// Added by YHH
+  Future<void> castScreen(
+      String token, String appId, String channelId, int clientRole) {
+    return _invokeMethod('castScreen', {
+      'token': token,
+      'appId': appId,
+      'channelId': channelId,
+      'clientRole': clientRole
+    });
+  }
+
+  /// Added by YHH
+  Future<void> leaveCastScreen() {
+    return _invokeMethod('leaveCastScreen');
+  }
+
+  /// Added by YHH
+  Future<void> destroyCastScreen() {
+    return _invokeMethod('destroyCastScreen');
+  }
+
   @override
   Future<void> joinChannel(
       String token, String channelName, String optionalInfo, int optionalUid,
@@ -962,8 +983,7 @@ class RtcEngine with RtcEngineInterface {
 
   @override
   Future<int> createDataStreamWithConfig(DataStreamConfig config) {
-    return _invokeMethod(
-        'createDataStream', {'config': config.toJson()});
+    return _invokeMethod('createDataStream', {'config': config.toJson()});
   }
 
   @override

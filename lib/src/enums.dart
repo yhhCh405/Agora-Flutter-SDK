@@ -3,6 +3,14 @@ import 'package:json_annotation/json_annotation.dart';
 import 'events.dart';
 import 'rtc_engine.dart';
 
+/// `For castScreen()`
+class CastClientRole {
+  /// Broadcaster
+  static final int Broadcaster = 1;
+  /// Audience
+  static final int Audience = 2;
+}
+
 /// The area of connection.
 enum AreaCode {
   /// Mainland China
@@ -2330,12 +2338,15 @@ enum CaptureBrightnessLevelType {
   /// Wait a few seconds to get the brightness level from [CaptureBrightnessLevelType] in the next callback.
   @JsonValue(-1)
   Invalid,
+
   /// The brightness level of the video image is normal.
   @JsonValue(0)
   Normal,
+
   /// The brightness level of the video image is too bright.
   @JsonValue(1)
   Bright,
+
   /// The brightness level of the video image is too dark.
   @JsonValue(2)
   Dark,
@@ -2403,15 +2414,19 @@ enum ExperiencePoorReason {
   /// None, indicating good QoE of the local user.
   @JsonValue(0)
   None,
+
   /// The remote user’s network quality is poor.
   @JsonValue(1)
   RemoteNetworkQualityPoor,
+
   /// The local user’s network quality is poor.
   @JsonValue(2)
   LocalNetworkQualityPoor,
+
   /// The local user’s Wi-Fi or mobile network signal is weak.
   @JsonValue(4)
   WirelessSignalPoor,
+
   /// The local user enables both Wi-Fi and bluetooth, and their signals interfere with each other. As a result, audio transmission quality is undermined.
   @JsonValue(8)
   WifiBluetoothCoexist,
@@ -2422,15 +2437,19 @@ enum VoiceConversionPreset {
   /// Turn off voice conversion effects and use the original voice.
   @JsonValue(0)
   Off,
+
   /// A gender-neutral voice. To avoid audio distortion, ensure that you use this enumerator to process a female-sounding voice.
   @JsonValue(50397440)
   Neutral,
+
   /// A sweet voice. To avoid audio distortion, ensure that you use this enumerator to process a female-sounding voice.
   @JsonValue(50397696)
   Sweet,
+
   /// A steady voice. To avoid audio distortion, ensure that you use this enumerator to process a male-sounding voice.
   @JsonValue(50397952)
   Solid,
+
   /// A deep voice. To avoid audio distortion, ensure that you use this enumerator to process a male-sounding voice.
   @JsonValue(50398208)
   Bass,

@@ -4,6 +4,10 @@ import android.content.Context
 import io.agora.rtc.*
 import io.agora.rtc.internal.EncryptionConfig
 import io.agora.rtc.models.UserInfo
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import yhh.ScreenSharingManager
 
 class IRtcEngine {
   interface RtcEngineInterface : RtcUserInfoInterface, RtcAudioInterface, RtcVideoInterface,
@@ -13,6 +17,9 @@ class IRtcEngine {
     RtcFallbackInterface, RtcTestInterface, RtcMediaMetadataInterface,
     RtcWatermarkInterface, RtcEncryptionInterface, RtcAudioRecorderInterface,
     RtcInjectStreamInterface, RtcCameraInterface, RtcStreamMessageInterface {
+
+//    fun castScreen(params: Map<String, *>, callback: Callback)
+
     fun create(params: Map<String, *>, callback: Callback)
 
     fun destroy(callback: Callback)
@@ -357,12 +364,27 @@ class RtcEngineManager(
   var engine: RtcEngine? = null
     private set
   private var mediaObserver: MediaObserver? = null
+  private var activity: FlutterActivity? = null
 
   fun release() {
     RtcEngine.destroy()
     engine = null
     mediaObserver = null
   }
+
+//  override fun castScreen(params: Map<String, *>, callback: Callback) {
+//    val token = params["token"] as String
+//    val appId = params["appId"] as String
+//    val channelId = params["channelId"] as String
+//    val clientRole = params["clientRole"] as Int
+//    val ssMgr = ScreenSharingManager(this, activity!!,appId,token)
+//    callback.code(ssMgr.joinChannel(channelId,clientRole))
+//    (params["options"] as? Map<*, *>)?.let {
+//      callback.code(engine?.joinChannel(token, channelName, optionalInfo, optionalUid, mapToChannelMediaOptions(it)))
+//      return@joinChannel
+//    }
+//    callback.code(engine?.joinChannel(token, channelName, optionalInfo, optionalUid))
+//  }
 
   override fun create(params: Map<String, *>, callback: Callback) {
     engine = RtcEngineEx.create(mapToRtcEngineConfig(params["config"] as Map<*, *>).apply {
@@ -994,4 +1016,20 @@ class RtcEngineManager(
   override fun sendStreamMessage(params: Map<String, *>, callback: Callback) {
     callback.code(engine?.sendStreamMessage((params["streamId"] as Number).toInt(), (params["message"] as String).toByteArray()))
   }
+
+//  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+//    this.activity = binding.activity as FlutterActivity
+//  }
+//
+//  override fun onDetachedFromActivityForConfigChanges() {
+//
+//  }
+//
+//  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+//
+//  }
+//
+//  override fun onDetachedFromActivity() {
+//    this.activity = null
+//  }
 }

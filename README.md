@@ -1,4 +1,18 @@
-# agora_rtc_engine
+# agora_rtc_engine (Unofficial version)
+This is unofficial version of Agora Flutter SDK with new customized features. If you want official version instead, visit [this link](https://github.com/AgoraIO/Agora-Flutter-SDK)
+
+## Tweaked Note
+Author : *Ye Htet Hein*
+
+### Added Features
+- Screen Sharing
+
+### Usage
+#### Screen Sharing
+ - For broadcaster use `castScreen(<token>, <appId>, <channelName>, CastClientRole.Broadcaster)`, `leaveCastScreen()`, `destroyCastScreen()`
+ - For audience use `castScreen(<token>, <appId>, <channelName>, CastClientRole.Audience)`, `leaveCastScreen()`, `destroyCastScreen()`
+ - To retrieve widget, use `ScreenSharingView()`
+---
 
 ![pub package](https://img.shields.io/pub/v/agora_rtc_engine.svg?include_prereleases)
 

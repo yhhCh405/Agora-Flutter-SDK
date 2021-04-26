@@ -1,23 +1,33 @@
 package io.agora.agora_rtc_engine
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.annotation.NonNull
 import io.agora.rtc.RtcEngine
 import io.agora.rtc.base.RtcEngineManager
+import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.*
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import io.flutter.plugin.platform.PlatformViewRegistry
+import yhh.Const
+import yhh.ScreenSharingManager
+import yhh.ScreenSharingSurfaceViewFactory
 
 /** AgoraRtcEnginePlugin */
-class AgoraRtcEnginePlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
+class AgoraRtcEnginePlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler, ActivityAware, PluginRegistry.ActivityResultListener {
   private var registrar: Registrar? = null
   private var binding: FlutterPlugin.FlutterPluginBinding? = null
   private lateinit var applicationContext: Context
+  private var activity: FlutterActivity? = null
 
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
@@ -66,6 +76,7 @@ class AgoraRtcEnginePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stre
     this.binding = binding
     rtcChannelPlugin.onAttachedToEngine(binding)
     initPlugin(binding.applicationContext, binding.binaryMessenger, binding.platformViewRegistry)
+    binding.platformViewRegistry.registerViewFactory("yhh.ScreenSharingSurfaceView", ScreenSharingSurfaceViewFactory())
   }
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
@@ -99,6 +110,27 @@ class AgoraRtcEnginePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stre
     if (call.method == "getAssetAbsolutePath") {
       getAssetAbsolutePath(call, result)
       return
+    } else if (call.method == "castScreen") {
+      val params = call.arguments as Map<*, *>
+      val token = params["token"] as String
+      val appId = params["appId"] as String
+      val channelId = params["channelId"] as String
+      val clientRole = params["clientRole"] as Int
+      Const.screenSharingManager = ScreenSharingManager(this, activity!!, appId, token)
+      try {
+        Log.i("yhh", "Firing castScreen...")
+        Const.screenSharingManager!!.joinChannel(channelId, clientRole)
+        result.success(null)
+      } catch (e: java.lang.Exception) {
+        result.error("Error", e.message, null)
+      }
+    } else if (call.method == "leaveCastScreen") {
+      Const.screenSharingManager?.leave()
+      result.success(null)
+    } else if (call.method == "destroyCastScreen") {
+      Const.screenSharingManager?.leave()
+      Const.screenSharingManager?.destroy()
+      result.success(null)
     }
     manager.javaClass.declaredMethods.find { it.name == call.method }?.let { function ->
       function.let { method ->
@@ -133,5 +165,34 @@ class AgoraRtcEnginePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stre
       return@getAssetAbsolutePath
     }
     result.error(IllegalArgumentException::class.simpleName, null, null)
+  }
+
+  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    this.activity = binding.activity as FlutterActivity
+    binding.addActivityResultListener(this)
+  }
+
+  override fun onDetachedFromActivityForConfigChanges() {
+
+  }
+
+  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+
+  }
+
+  override fun onDetachedFromActivity() {
+    this.activity = null
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+    // Fix: Not reach here
+    Log.i("yhh", "OnActivityResult 1")
+    if (requestCode == ScreenSharingManager.PROJECTION_REQ_CODE && resultCode == Activity.RESULT_OK) {
+      Log.i("yhh", "MediaProj requestCode processing")
+      Const.screenSharingManager?.let {
+        it.onActivityResult(requestCode, resultCode, data)
+      }
+    }
+    return true
   }
 }
