@@ -26,6 +26,12 @@ import yhh.externvideosource.ExternalVideoInputManager
 import yhh.externvideosource.ExternalVideoInputService
 import yhh.externvideosource.IExternalVideoInputService
 
+/**
+ * Main class of screen sharing.
+ *
+ * @since 27-04-2021
+ * @author Ye Htet Hein
+ */
 class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
                            val activity: FlutterActivity,
                            private val appId: String,
@@ -40,6 +46,10 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
   var localView: FrameLayout = FrameLayout(activity)
   private val mHandler = Handler(Looper.getMainLooper())
 
+//  private var engine: RtcEngine? =
+////    ENGINE
+//    rtcEnginePlugin.engine()!!
+
   companion object {
     const val PROJECTION_REQ_CODE = 111
     const val DEFAULT_SHARE_FRAME_RATE = 15
@@ -49,6 +59,7 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
     Log.i("yhh", "Initializing Screenshare manager...")
     if (ENGINE == null) {
       try {
+//        ENGINE = rtcEnginePlugin.engine()!!
         ENGINE = RtcEngine.create(
           activity,
           appId,
@@ -60,14 +71,7 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
     }
   }
 
-  private var engine: RtcEngine? =
-//    ENGINE
-    rtcEnginePlugin.engine()!!
-
-
   fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    Log.i("yhh", "Activity result!!!")
-
     try {
       val metrics = DisplayMetrics()
       activity.windowManager.defaultDisplay.getMetrics(metrics)
@@ -99,6 +103,7 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
         metrics.heightPixels
       )
       mService!!.setExternalVideoInput(ExternalVideoInputManager.TYPE_SCREEN_SHARE, data)
+      Log.i("yhh","Completed configuration")
     } catch (e: RemoteException) {
       e.printStackTrace()
     }
@@ -121,19 +126,21 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
       )
     )
 
-
     // Setup local video to render your local camera preview
-    engine!!.setupLocalVideo(VideoCanvas(localSurface, RENDER_MODE_HIDDEN, 0))
+    ENGINE!!.setupLocalVideo(VideoCanvas(localSurface, RENDER_MODE_HIDDEN, 0))
   }
 
   private fun setRemotePreview(context: Context) {
 //        /**Display remote video stream */
     val remoteSurface = RtcEngine.CreateRendererView(context)
-//    remoteView!!.setZOrderMediaOverlay(true)
+    remoteSurface!!.setZOrderMediaOverlay(true)
 
     if (remoteView.childCount > 0) {
+      Log.i("yhh","Remote frame already have ${remoteView.childCount} children. Removing...")
       remoteView.removeAllViews()
     }
+    Log.i("yhh","Remote Surface => $remoteSurface")
+    Log.i("yhh","Remote UID => $remoteUid")
     remoteView.addView(
       remoteSurface, ViewGroup.LayoutParams(
       ViewGroup.LayoutParams.MATCH_PARENT,
@@ -143,13 +150,13 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
 
 
     /**Setup remote video to render */
-    engine!!.setupRemoteVideo(VideoCanvas(remoteSurface, curRenderMode, remoteUid))
+    ENGINE!!.setupRemoteVideo(VideoCanvas(remoteSurface, curRenderMode, remoteUid))
   }
 
   fun joinChannel(
     channelId: String,
     clientRole: Int
-  ): Int {
+  ) {
     if (clientRole == CLIENT_ROLE_AUDIENCE) {
       setRemotePreview(activity)
       addLocalPreview()
@@ -157,15 +164,14 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
     if (clientRole == CLIENT_ROLE_BROADCASTER) {
       bindVideoService()
       addLocalPreview()
-
     }
-    engine!!.setParameters("{\"che.video.mobile_1080p\":true}")
-    engine!!.setChannelProfile(CHANNEL_PROFILE_LIVE_BROADCASTING)
-    engine!!.setClientRole(clientRole)
-    engine!!.enableVideo()
-    engine!!.setVideoSource(AgoraDefaultSource())
-    engine!!.setDefaultAudioRoutetoSpeakerphone(false)
-    engine!!.setEnableSpeakerphone(false)
+    ENGINE!!.setParameters("{\"che.video.mobile_1080p\":true}")
+    ENGINE!!.setChannelProfile(CHANNEL_PROFILE_LIVE_BROADCASTING)
+    ENGINE!!.setClientRole(clientRole)
+    ENGINE!!.enableVideo()
+    ENGINE!!.setVideoSource(AgoraDefaultSource())
+    ENGINE!!.setDefaultAudioRoutetoSpeakerphone(false)
+    ENGINE!!.setEnableSpeakerphone(false)
 
     if (TextUtils.equals(accessToken, "") || TextUtils.equals(
         accessToken,
@@ -178,32 +184,37 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
 //        option.autoSubscribeAudio = true
     option.autoSubscribeVideo = true
 
+    Log.i("yhh","Joining channel $channelId")
     val res: Int =
-      engine!!.joinChannel(accessToken, channelId, "Extra Optional Data", 0, option)
+      ENGINE!!.joinChannel(accessToken, channelId, "Extra Optional Data", 0, option)
     if (res != 0) {
       // Usually happens with invalid parameters
       // Error code description can be found at:
-      // en: https://docs.agora.io/en/Voice/API%20Reference/java/classio_1_1agora_1_1rtc_1_1_i_rtc_engine_event_handler_1_1_error_code.html
-      // cn: https://docs.agora.io/cn/Voice/API%20Reference/java/classio_1_1agora_1_1rtc_1_1_i_rtc_engine_event_handler_1_1_error_code.html
+      // en: https://docs.agora.io/en/Voice/API%20Reference/java/classio_1_1agora_1_1rtc_1_1_i_rtc_ENGINE_event_handler_1_1_error_code.html
+      // cn: https://docs.agora.io/cn/Voice/API%20Reference/java/classio_1_1agora_1_1rtc_1_1_i_rtc_ENGINE_event_handler_1_1_error_code.html
 //            showAlert(RtcEngine.getErrorDescription(Math.abs(res)))
-      return -1
-    }
-    return 1
 
+    }
   }
 
   fun leave() {
-    engine!!.leaveChannel()
+    Log.i("yhh","Leaving channel...")
+    ENGINE!!.leaveChannel()
   }
 
   fun destroy() {
+    Log.i("yhh","Unbinding service...")
     unbindVideoService()
 //    TEXTUREVIEW = null
-    if (engine != null) {
-      engine!!.leaveChannel()
+    if (ENGINE != null) {
+      Log.i("yhh","Leaving channel...")
+      ENGINE!!.leaveChannel()
     }
-    mHandler.post { RtcEngine.destroy() }
-    engine = null
+    mHandler.post {
+      Log.i("yhh","Destroying...")
+      RtcEngine.destroy()
+    }
+    ENGINE = null
   }
 
   private fun bindVideoService() {
@@ -231,7 +242,7 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
       "SDK encoding ->width:$width,height:$height"
     )
     /**Setup video stream encoding configs */
-    engine!!.setVideoEncoderConfiguration(
+    ENGINE!!.setVideoEncoderConfiguration(
       VideoEncoderConfiguration(
         VideoEncoderConfiguration.VideoDimensions(width, height),
         VideoEncoderConfiguration.FRAME_RATE.FRAME_RATE_FPS_15,
@@ -239,12 +250,12 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
       )
     )
 
-//        engine!!.setParameters("{\"rtc.log_filter\": 65535}");
+//        ENGINE!!.setParameters("{\"rtc.log_filter\": 65535}");
   }
 
   private inner class YIRtcEngineEventHandler : IRtcEngineEventHandler() {
     /**Reports a warning during SDK runtime.
-     * Warning code: https://docs.agora.io/en/Voice/API%20Reference/java/classio_1_1agora_1_1rtc_1_1_i_rtc_engine_event_handler_1_1_warn_code.html */
+     * Warning code: https://docs.agora.io/en/Voice/API%20Reference/java/classio_1_1agora_1_1rtc_1_1_i_rtc_ENGINE_event_handler_1_1_warn_code.html */
     override fun onWarning(warn: Int) {
       Log.w(
         "yhh",
@@ -257,7 +268,7 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
     }
 
     /**Reports an error during SDK runtime.
-     * Error code: https://docs.agora.io/en/Voice/API%20Reference/java/classio_1_1agora_1_1rtc_1_1_i_rtc_engine_event_handler_1_1_error_code.html */
+     * Error code: https://docs.agora.io/en/Voice/API%20Reference/java/classio_1_1agora_1_1rtc_1_1_i_rtc_ENGINE_event_handler_1_1_error_code.html */
     override fun onError(err: Int) {
       Log.e(
         "yhh",
@@ -399,7 +410,7 @@ class ScreenSharingManager(private val rtcEnginePlugin: AgoraRtcEnginePlugin,
         /**Clear render view
          * Note: The video will stay at its last frame, to completely remove it you will need to
          * remove the SurfaceView from its parent */
-        engine!!.setupRemoteVideo(VideoCanvas(null, RENDER_MODE_HIDDEN, uid))
+        ENGINE!!.setupRemoteVideo(VideoCanvas(null, RENDER_MODE_HIDDEN, uid))
 
       }
     }

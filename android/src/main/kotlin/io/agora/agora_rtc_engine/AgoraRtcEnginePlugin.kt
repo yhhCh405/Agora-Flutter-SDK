@@ -185,10 +185,8 @@ class AgoraRtcEnginePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stre
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-    // Fix: Not reach here
-    Log.i("yhh", "OnActivityResult 1")
     if (requestCode == ScreenSharingManager.PROJECTION_REQ_CODE && resultCode == Activity.RESULT_OK) {
-      Log.i("yhh", "MediaProj requestCode processing")
+      Log.i("yhh", "Activity Result: MediaProj requestCode processing")
       Const.screenSharingManager?.let {
         it.onActivityResult(requestCode, resultCode, data)
       }
